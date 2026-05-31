@@ -65,3 +65,5 @@ data/
 
 # Optional lockfiles remain tracked by default.
 
+# Allow frontend source data
+!driver-monitoring-ui/src/data/
