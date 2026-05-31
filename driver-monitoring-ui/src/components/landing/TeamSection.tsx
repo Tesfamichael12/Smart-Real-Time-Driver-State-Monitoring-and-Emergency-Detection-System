@@ -1,4 +1,4 @@
-import { Shield, Github, Linkedin, Mail, Cpu, Brain, Laptop, Terminal } from 'lucide-react'
+import { Shield, Github, Linkedin, Mail, Cpu, Brain, Laptop, Terminal, Eye } from 'lucide-react'
 import RevealSection from '../shared/RevealSection'
 
 interface TeamMember {
@@ -9,24 +9,34 @@ interface TeamMember {
   icon: any
   tag: string
   skills: string[]
+  socials?: {
+    github?: string
+    linkedin?: string
+    email?: string
+  }
 }
 
 const team: TeamMember[] = [
   {
     name: 'Tesfamichael T.',
-    role: 'Firmware & State Machine Developer',
+    role: 'Technical Lead & Embedded Systems Engineer',
     initials: 'TT',
     color: 'from-amber-500/10 to-orange-500/10 hover:border-amber-500/30',
-    icon: Cpu,
-    tag: 'FIRMWARE',
-    skills: ['ESP32', 'FreeRTOS', 'C++', 'GPIO Matrix']
+    icon: Brain,
+    tag: 'TECH LEAD',
+    skills: ['System Architecture', 'Firmware (C++)', 'Computer Vision', 'React UI'],
+    socials: {
+      github: 'https://github.com/Tesfamichael12',
+      linkedin: 'https://www.linkedin.com/in/tesfamichael-tafere/',
+      email: 'mailto:tesfamichael132@gmail.com'
+    }
   },
   {
     name: 'Tewodros G.',
     role: 'Computer Vision Specialist',
     initials: 'TG',
     color: 'from-cyan-500/10 to-blue-500/10 hover:border-cyan-500/30',
-    icon: Brain,
+    icon: Eye,
     tag: 'AI / CV',
     skills: ['OpenCV', 'MediaPipe', 'Python', 'Landmark Analysis']
   },
@@ -114,17 +124,35 @@ export default function TeamSection() {
                   ))}
                 </div>
 
-                {/* Simulated Social Links */}
+                {/* Social Links */}
                 <div className="flex items-center gap-2.5 mt-5 text-white/20 group-hover:text-white/40 transition-colors">
-                  <button className="hover:text-white transition-colors" aria-label="GitHub Profile">
-                    <Github className="w-3.5 h-3.5" />
-                  </button>
-                  <button className="hover:text-white transition-colors" aria-label="LinkedIn Profile">
-                    <Linkedin className="w-3.5 h-3.5" />
-                  </button>
-                  <button className="hover:text-white transition-colors" aria-label="Contact Email">
-                    <Mail className="w-3.5 h-3.5" />
-                  </button>
+                  {member.socials?.github ? (
+                    <a href={member.socials.github} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="GitHub Profile">
+                      <Github className="w-3.5 h-3.5" />
+                    </a>
+                  ) : (
+                    <div className="opacity-30 cursor-not-allowed">
+                      <Github className="w-3.5 h-3.5" />
+                    </div>
+                  )}
+                  {member.socials?.linkedin ? (
+                    <a href={member.socials.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="LinkedIn Profile">
+                      <Linkedin className="w-3.5 h-3.5" />
+                    </a>
+                  ) : (
+                    <div className="opacity-30 cursor-not-allowed">
+                      <Linkedin className="w-3.5 h-3.5" />
+                    </div>
+                  )}
+                  {member.socials?.email ? (
+                    <a href={member.socials.email} className="hover:text-white transition-colors" aria-label="Contact Email">
+                      <Mail className="w-3.5 h-3.5" />
+                    </a>
+                  ) : (
+                    <div className="opacity-30 cursor-not-allowed">
+                      <Mail className="w-3.5 h-3.5" />
+                    </div>
+                  )}
                 </div>
 
               </RevealSection>

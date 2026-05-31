@@ -66,7 +66,7 @@ export default function TopBar({ alertCount, onSearch }: TopBarProps) {
             <User className="w-4 h-4 text-white/60" />
           </div>
           <div className="hidden md:block text-left">
-            <div className="text-xs font-bold text-white/80 font-display">A. A. S. T. U.</div>
+            <div className="text-xs font-bold text-white/80 font-display">Admin</div>
             <div className="text-[9px] text-white/30 font-mono tracking-wider">FLEET OPERATOR</div>
           </div>
         </button>

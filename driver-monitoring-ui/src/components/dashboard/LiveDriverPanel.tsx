@@ -46,13 +46,42 @@ export default function LiveDriverPanel({ vehicle }: LiveDriverPanelProps) {
         {/* Camera Panel (Takes up more space for a wider view) */}
         <div className="xl:col-span-2 lg:col-span-3 flex flex-col">
           <div className={cn(
-            "relative aspect-video w-full rounded-xl bg-black border overflow-hidden mb-4 transition-all duration-500 shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]",
+            "relative aspect-video w-full rounded-xl bg-[#020508] border overflow-hidden mb-4 transition-all duration-500 shadow-[inset_0_0_30px_rgba(0,0,0,0.9)]",
             isEmergency ? "border-rose-500/40 shadow-[0_0_30px_rgba(244,63,94,0.15)]" :
             isAlarm ? "border-rose-500/35 shadow-[0_0_20px_rgba(244,63,94,0.1)]" :
             isWarning ? "border-amber-500/30 shadow-[0_0_25px_rgba(245,158,11,0.08)]" :
             "border-white/10"
           )}>
-            <svg viewBox="0 0 800 450" className="absolute inset-0 w-full h-full">
+            {/* Background Camera Face Simulation */}
+            <div className="absolute inset-0 w-full h-full pointer-events-none select-none overflow-hidden bg-[#020508]/90">
+              <img
+                src="/driver-cv-face.png"
+                alt="Driver CV camera background simulation"
+                className={cn(
+                  "w-full h-full object-cover transition-all duration-700 select-none pointer-events-none",
+                  vehicle.faceDetected 
+                    ? "opacity-35 blur-[0.5px] scale-100" 
+                    : "opacity-5 blur-sm scale-105"
+                )}
+                style={{
+                  filter: isEmergency || isAlarm
+                    ? 'hue-rotate(330deg) brightness(0.6) contrast(1.25) saturate(1.1)'
+                    : isWarning
+                    ? 'hue-rotate(30deg) brightness(0.7) contrast(1.15) saturate(1.0)'
+                    : 'brightness(0.75) contrast(1.1) saturate(0.9)'
+                }}
+              />
+              {/* Scanline texture */}
+              <div className="absolute inset-0 opacity-[0.12] pointer-events-none mix-blend-overlay" style={{
+                backgroundImage: 'repeating-linear-gradient(0deg, rgba(6,182,212,0.15) 0px, rgba(6,182,212,0.15) 1px, transparent 1px, transparent 4px)',
+              }} />
+              {/* Vignette gradients to make the image blend perfectly into the black borders */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,#000_100%)] opacity-75 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#020508] via-transparent to-[#020508] pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#020508] via-transparent to-[#020508] pointer-events-none" />
+            </div>
+
+            <svg viewBox="0 0 800 450" className="absolute inset-0 w-full h-full relative z-10">
               {/* Grid Lines */}
               <pattern id="grid-live" width="40" height="40" patternUnits="userSpaceOnUse">
                 <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(6,182,212,0.02)" strokeWidth="1"/>

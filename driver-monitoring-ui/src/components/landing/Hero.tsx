@@ -256,7 +256,7 @@ export default function Hero({ onOpenDashboard }: { onOpenDashboard: () => void 
                         <span className="text-[9px] font-mono text-white/50">REC</span>
                       </div>
                       <div className="bg-black/50 backdrop-blur-sm px-2 py-1 rounded-md">
-                        <span className="text-[9px] font-mono text-white/50">09:03:01 · AASTU-CAM</span>
+                        <span className="text-[9px] font-mono text-white/50">09:03:01</span>
                       </div>
                     </div>
 
