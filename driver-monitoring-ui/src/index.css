@@ -443,3 +443,25 @@ section[id] {
   background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
   background-size: 28px 28px;
 }
+
+/* ============================
+   Laser Sweep Animation
+   ============================ */
+.animate-laser-sweep {
+  animation: laserSweep 3.5s ease-in-out infinite;
+}
+
+@keyframes laserSweep {
+  0%, 100% {
+    top: 5%;
+    opacity: 0.15;
+  }
+  10%, 90% {
+    opacity: 0.95;
+  }
+  50% {
+    top: 95%;
+    opacity: 0.95;
+  }
+}
+

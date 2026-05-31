@@ -143,7 +143,7 @@ export default function Hero({ onOpenDashboard }: { onOpenDashboard: () => void 
             <p className="text-base md:text-lg text-white/45 leading-relaxed max-w-xl animate-slide-up"
               style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
               An integrated safety platform combining computer vision fatigue detection with
-              embedded crash response — detecting drowsiness before accidents and triggering
+              embedded crash response, detecting drowsiness before accidents and triggering
               emergency alerts when every second counts.
             </p>
 
@@ -235,6 +235,9 @@ export default function Hero({ onOpenDashboard }: { onOpenDashboard: () => void 
 
                   {/* HUD overlay on top of image */}
                   <div className="absolute inset-0 pointer-events-none">
+                    {/* Laser Sweep Line */}
+                    <div className="absolute left-0 w-full h-[2.5px] bg-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.9)] animate-laser-sweep z-10" />
+
                     {/* Scan-line texture */}
                     <div className="absolute inset-0" style={{
                       backgroundImage: 'repeating-linear-gradient(0deg, rgba(6,182,212,0.018) 0px, rgba(6,182,212,0.018) 1px, transparent 1px, transparent 4px)',

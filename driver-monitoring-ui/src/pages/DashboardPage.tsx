@@ -199,12 +199,14 @@ export default function DashboardPage({ onBackToLanding }: { onBackToLanding: ()
         <main className={cn('p-4 md:p-6 space-y-6', isEmergency ? 'pt-14' : '')}>
           {/* Back to landing */}
           <div className="flex items-center justify-between">
-            <h1 className="text-lg font-bold capitalize">{activeSection} Dashboard</h1>
+            <h1 className="text-xl font-bold font-display tracking-tight text-white capitalize">
+              {activeSection === 'overview' ? 'System Status Overview' : `${activeSection} Hub`}
+            </h1>
             <button
               onClick={onBackToLanding}
-              className="text-xs text-white/30 hover:text-white/60 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-white/50 hover:text-cyan-400 hover:border-cyan-500/30 transition-all duration-300 font-mono uppercase tracking-wider"
             >
-              ← Back to Website
+              ← Back to Site
             </button>
           </div>
 
