@@ -1,0 +1,202 @@
+{
+  "version": 1,
+  "author": "Smart Driver State Monitoring and Emergency Detection Demo",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd1",
+      "top": 10,
+      "left": 20,
+      "attrs": {
+        "pins": "i2c",
+        "i2cAddress": "0x27"
+      }
+    },
+    {
+      "type": "wokwi-esp32-devkit-v1",
+      "id": "esp",
+      "top": 230,
+      "left": 60,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledOk",
+      "top": 94,
+      "left": -30,
+      "attrs": {
+        "color": "green",
+        "label": "NORMAL"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledWarn",
+      "top": 94,
+      "left": 40,
+      "attrs": {
+        "color": "yellow",
+        "label": "WARNING"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledAlarm",
+      "top": 94,
+      "left": 110,
+      "attrs": {
+        "color": "#FFA500",
+        "label": "ALARM"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledEmg",
+      "top": 94,
+      "left": 180,
+      "attrs": {
+        "color": "red",
+        "label": "EMERGENCY"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "rOk",
+      "top": 130,
+      "left": -30,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "rWarn",
+      "top": 130,
+      "left": 40,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "rAlarm",
+      "top": 130,
+      "left": 110,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "rEmg",
+      "top": 130,
+      "left": 180,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnCancel",
+      "top": 395,
+      "left": 80,
+      "attrs": {
+        "color": "green",
+        "label": "MUTE / CANCEL SOS"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnCrash",
+      "top": 395,
+      "left": 250,
+      "attrs": {
+        "color": "red",
+        "label": "CRASH TEST"
+      }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "buzz1",
+      "top": 395,
+      "left": 420,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-mpu6050",
+      "id": "imu1",
+      "top": 30,
+      "left": 450,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-gps",
+      "id": "gps1",
+      "top": 230,
+      "left": 450,
+      "attrs": {
+        "latitude": "9.030100",
+        "longitude": "38.761300",
+        "altitude": "2355",
+        "speed": "80"
+      }
+    },
+    {
+      "type": "wokwi-slide-potentiometer",
+      "id": "pot1",
+      "top": 390,
+      "left": 610,
+      "attrs": {
+        "travelLength": "30",
+        "label": "Fatigue Score"
+      }
+    }
+  ],
+  "connections": [
+    ["imu1:VCC", "esp:3V3", "red", ["v0"]],
+    ["imu1:GND", "esp:GND.1", "black", ["v0"]],
+    ["imu1:SDA", "esp:D21", "green", ["v0"]],
+    ["imu1:SCL", "esp:D22", "green", ["v0"]],
+
+    ["gps1:VCC", "esp:3V3", "red", ["v0"]],
+    ["gps1:GND", "esp:GND.1", "black", ["v0"]],
+    ["gps1:TX", "esp:RX2", "green", ["v0"]],
+    ["gps1:RX", "esp:TX2", "green", ["v0"]],
+
+    ["lcd1:VCC", "esp:3V3", "red", ["v0"]],
+    ["lcd1:GND", "esp:GND.1", "black", ["v0"]],
+    ["lcd1:SDA", "esp:D21", "green", ["v0"]],
+    ["lcd1:SCL", "esp:D22", "green", ["v0"]],
+
+    ["esp:D4", "rOk:1", "green", ["v0"]],
+    ["rOk:2", "ledOk:A", "green", ["v0"]],
+    ["ledOk:C", "esp:GND.2", "black", ["v0"]],
+
+    ["esp:D25", "rWarn:1", "green", ["v0"]],
+    ["rWarn:2", "ledWarn:A", "green", ["v0"]],
+    ["ledWarn:C", "esp:GND.2", "black", ["v0"]],
+
+    ["esp:D26", "rAlarm:1", "green", ["v0"]],
+    ["rAlarm:2", "ledAlarm:A", "green", ["v0"]],
+    ["ledAlarm:C", "esp:GND.2", "black", ["v0"]],
+
+    ["esp:D27", "rEmg:1", "green", ["v0"]],
+    ["rEmg:2", "ledEmg:A", "green", ["v0"]],
+    ["ledEmg:C", "esp:GND.2", "black", ["v0"]],
+
+    ["buzz1:1", "esp:GND.2", "black", ["v0"]],
+    ["buzz1:2", "esp:D33", "green", ["v0"]],
+
+    ["btnCancel:1.l", "esp:GND.2", "black", ["v0"]],
+    ["btnCancel:2.l", "esp:D32", "green", ["v0"]],
+
+    ["btnCrash:1.l", "esp:GND.2", "black", ["v0"]],
+    ["btnCrash:2.l", "esp:D14", "green", ["v0"]],
+
+    ["pot1:VCC", "esp:3V3", "red", ["v0"]],
+    ["pot1:GND", "esp:GND.1", "black", ["v0"]],
+    ["pot1:SIG", "esp:D34", "yellow", ["v0"]]
+  ],
+  "dependencies": {}
+}
