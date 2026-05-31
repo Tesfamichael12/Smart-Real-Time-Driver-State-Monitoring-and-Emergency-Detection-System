@@ -35,6 +35,7 @@ import time
 import math
 import argparse
 import platform
+import threading
 from collections import deque
 
 import numpy as np
@@ -80,18 +81,22 @@ def beep():
     Simple demo beep.
     On Windows it uses winsound.
     On other systems it prints terminal bell.
+    Runs in a background thread to prevent frame loop lag.
     """
     if not config.ENABLE_AUDIO_BEEP:
         return
 
-    try:
-        if platform.system().lower() == "windows":
-            import winsound
-            winsound.Beep(1200, 120)
-        else:
-            print("\a", end="", flush=True)
-    except Exception:
-        pass
+    def _beep_thread():
+        try:
+            if platform.system().lower() == "windows":
+                import winsound
+                winsound.Beep(1200, 120)
+            else:
+                print("\a", end="", flush=True)
+        except Exception:
+            pass
+
+    threading.Thread(target=_beep_thread, daemon=True).start()
 
 
 def draw_text(frame, text, x, y, colour=(255, 255, 255), scale=0.65, thickness=2):
@@ -112,6 +117,8 @@ def draw_filled_box(frame, x1, y1, x2, y2, colour):
 
 
 def state_colour_bgr(state):
+    if state == "CALIBRATING":
+        return 235, 140, 20
     if state == "NORMAL":
         return 0, 180, 0
     if state == "WARNING":
@@ -293,6 +300,58 @@ def estimate_head_pose(landmarks, frame_width, frame_height):
 
 
 # ============================================================
+# Real-Time Video Capture (Non-blocking Reader Thread)
+# ============================================================
+
+class RealTimeVideoCapture:
+    def __init__(self, source, width=None, height=None):
+        self.cap = cv2.VideoCapture(source)
+        if width:
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        if height:
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+
+        self.ret = False
+        self.frame = None
+        self.running = True
+        self.lock = threading.Lock()
+
+        # Start background frame grabber thread
+        self.thread = threading.Thread(target=self._update, daemon=True)
+        self.thread.start()
+
+    def _update(self):
+        while self.running:
+            if self.cap.isOpened():
+                ret, frame = self.cap.read()
+                if ret:
+                    with self.lock:
+                        self.ret = ret
+                        self.frame = frame
+                else:
+                    with self.lock:
+                        self.ret = False
+                    time.sleep(0.01)
+            else:
+                time.sleep(0.01)
+
+    def read(self):
+        with self.lock:
+            if self.frame is not None:
+                return self.ret, self.frame.copy()
+            return self.ret, None
+
+    def isOpened(self):
+        return self.cap.isOpened()
+
+    def release(self):
+        self.running = False
+        if self.thread.is_alive():
+            self.thread.join(timeout=1.0)
+        self.cap.release()
+
+
+# ============================================================
 # Serial Output Class
 # ============================================================
 
@@ -422,6 +481,29 @@ class DriverStateMonitor:
         self.latest_state = "NORMAL"
         self.latest_reason = "Driver appears alert"
 
+        # Head Pose Calibration state
+        self.pitch_offset = 0.0
+        self.yaw_offset = 0.0
+        self.roll_offset = 0.0
+        self.calibration_frames = []
+        self.is_calibrated = False
+        
+        # EMA Smoothing state
+        self.smooth_pitch = 0.0
+        self.smooth_yaw = 0.0
+        self.smooth_roll = 0.0
+        self.pose_initialized = False
+
+    def trigger_recalibration(self):
+        """Reset baseline pose calibration offsets."""
+        self.calibration_frames = []
+        self.pitch_offset = 0.0
+        self.yaw_offset = 0.0
+        self.roll_offset = 0.0
+        self.is_calibrated = False
+        self.pose_initialized = False
+        print("Driver Head Pose Calibration Triggered. Please look straight at the camera.")
+
     def update_fps(self):
         now = time.time()
         delta = now - self.prev_frame_time
@@ -500,6 +582,9 @@ class DriverStateMonitor:
             return False, 0.0
 
     def calculate_head_pose_state(self, pitch, yaw, roll, pose_success):
+        if not self.is_calibrated:
+            return "CALIBRATING", 0.0
+
         if not pose_success:
             return "UNKNOWN", 0.0
 
@@ -629,6 +714,8 @@ class DriverStateMonitor:
         return score, ", ".join(reasons)
 
     def classify_state(self, fatigue_score, face_detected, face_lost_seconds):
+        if not self.is_calibrated:
+            return "CALIBRATING"
         if not face_detected:
             if face_lost_seconds >= config.FACE_LOST_ALARM_SECONDS:
                 return "CAMERA_LOST"
@@ -649,7 +736,7 @@ class DriverStateMonitor:
     def maybe_alert(self, state):
         now = time.time()
 
-        if state == "NORMAL":
+        if state in ["NORMAL", "CALIBRATING"]:
             return
 
         if state == "WARNING":
@@ -702,7 +789,9 @@ class DriverStateMonitor:
             "faceLostSeconds": round(float(face_lost_seconds), 2),
             "fatigueScore": int(fatigue_score),
             "driverState": state,
-            "eventReason": reason
+            "eventReason": reason,
+            "isCalibrating": not self.is_calibrated,
+            "calibrationProgress": min(1.0, len(self.calibration_frames) / float(config.POSE_CALIBRATION_FRAMES))
         }
         return payload
 
@@ -742,6 +831,43 @@ class DriverStateMonitor:
             mar = calculate_mar(landmarks, frame_width, frame_height)
 
             pitch, yaw, roll, pose_success = estimate_head_pose(landmarks, frame_width, frame_height)
+
+            if pose_success:
+                if len(self.calibration_frames) < config.POSE_CALIBRATION_FRAMES:
+                    self.calibration_frames.append((pitch, yaw, roll))
+                    if len(self.calibration_frames) == config.POSE_CALIBRATION_FRAMES:
+                        self.pitch_offset = sum(p for p, _, _ in self.calibration_frames) / float(config.POSE_CALIBRATION_FRAMES)
+                        self.yaw_offset = sum(y for _, y, _ in self.calibration_frames) / float(config.POSE_CALIBRATION_FRAMES)
+                        self.roll_offset = sum(r for _, _, r in self.calibration_frames) / float(config.POSE_CALIBRATION_FRAMES)
+                        self.is_calibrated = True
+                        print(f"Pose calibration completed. Offsets - Pitch: {self.pitch_offset:.2f}, Yaw: {self.yaw_offset:.2f}, Roll: {self.roll_offset:.2f}")
+
+                # Apply calibration offsets
+                pitch -= self.pitch_offset
+                yaw -= self.yaw_offset
+                roll -= self.roll_offset
+
+                # Apply EMA Smoothing
+                if not self.pose_initialized:
+                    self.smooth_pitch = pitch
+                    self.smooth_yaw = yaw
+                    self.smooth_roll = roll
+                    self.pose_initialized = True
+                else:
+                    alpha = 0.05 # Stronger Smoothing factor (lower = more smoothing)
+                    self.smooth_pitch = (alpha * pitch) + ((1.0 - alpha) * self.smooth_pitch)
+                    self.smooth_yaw = (alpha * yaw) + ((1.0 - alpha) * self.smooth_yaw)
+                    self.smooth_roll = (alpha * roll) + ((1.0 - alpha) * self.smooth_roll)
+
+                pitch, yaw, roll = self.smooth_pitch, self.smooth_yaw, self.smooth_roll
+
+                # Center Dead-zone Filter (snap to 0 if within +/- 5 degrees independently)
+                if abs(pitch) < 5.0:
+                    pitch = 0.0
+                if abs(yaw) < 5.0:
+                    yaw = 0.0
+                if abs(roll) < 5.0:
+                    roll = 0.0
 
             if config.SHOW_LANDMARK_POINTS:
                 for point in left_eye_points + right_eye_points:
@@ -824,120 +950,287 @@ def draw_dashboard(frame, payload):
     score = payload["fatigueScore"]
     colour = state_colour_bgr(state)
 
-    # Header
-    draw_filled_box(frame, 0, 0, width, 70, (30, 30, 30))
+    # 1. Header Panel (Glassmorphic translucent dark block)
+    header_h = 85
+    overlay = frame.copy()
+    cv2.rectangle(overlay, (0, 0), (width, header_h), (15, 15, 15), -1)
+    cv2.addWeighted(overlay, 0.75, frame, 0.25, 0, dst=frame)
+    # Header Bottom Line separator
+    cv2.line(frame, (0, header_h), (width, header_h), (50, 50, 50), 1, cv2.LINE_AA)
+
+    # Header Column 1: Title & Subheading
     draw_text(
         frame,
-        "SMART DRIVER STATE MONITORING - COMPUTER VISION MODULE",
+        "SAFEDRIVE GUARDIAN",
         20,
-        30,
+        35,
         (255, 255, 255),
-        0.75,
+        0.7,
         2
     )
-
     draw_text(
         frame,
-        f"STATE: {state}",
+        "Driver Monitoring Subsystem",
         20,
-        60,
-        colour,
-        0.8,
-        2
+        62,
+        (160, 160, 160),
+        0.45,
+        1
     )
 
-    # Fatigue score bar
-    bar_x = 360
-    bar_y = 40
-    bar_w = 360
-    bar_h = 18
-
-    cv2.rectangle(frame, (bar_x, bar_y), (bar_x + bar_w, bar_y + bar_h), (220, 220, 220), 2)
+    # Header Column 2: Center Fatigue Score progress bar
+    bar_x = 350
+    bar_y = 42
+    bar_w = 260
+    bar_h = 16
+    
+    # Progress Bar Background
+    cv2.rectangle(frame, (bar_x, bar_y), (bar_x + bar_w, bar_y + bar_h), (40, 40, 40), -1)
+    # Progress Bar Fill
     filled_w = int((score / 100.0) * bar_w)
-    cv2.rectangle(frame, (bar_x, bar_y), (bar_x + filled_w, bar_y + bar_h), colour, -1)
+    if filled_w > 0:
+        cv2.rectangle(frame, (bar_x, bar_y), (bar_x + filled_w, bar_y + bar_h), colour, -1)
+    # Progress Bar Border
+    cv2.rectangle(frame, (bar_x, bar_y), (bar_x + bar_w, bar_y + bar_h), (80, 80, 80), 1, cv2.LINE_AA)
 
-    draw_text(frame, f"Fatigue Score: {score}/100", bar_x, bar_y - 8, (255, 255, 255), 0.55, 1)
+    draw_text(frame, f"FATIGUE LEVEL: {score}%", bar_x, bar_y - 10, (220, 220, 220), 0.45, 1)
 
-    # Left panel
+    # Header Column 3: State Badge on Right
+    badge_w = 180
+    badge_h = 45
+    badge_x = width - badge_w - 20
+    badge_y = 20
+    
+    # State Badge overlay (colored translucent background)
+    badge_overlay = frame.copy()
+    cv2.rectangle(badge_overlay, (badge_x, badge_y), (badge_x + badge_w, badge_y + badge_h), colour, -1)
+    cv2.addWeighted(badge_overlay, 0.85, frame, 0.15, 0, dst=frame)
+    # State Badge border
+    cv2.rectangle(frame, (badge_x, badge_y), (badge_x + badge_w, badge_y + badge_h), (255, 255, 255), 1, cv2.LINE_AA)
+    
+    # Center text inside badge
+    badge_text = state
+    (text_w, text_h), _ = cv2.getTextSize(badge_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+    text_x = badge_x + int((badge_w - text_w) / 2)
+    text_y = badge_y + int((badge_h + text_h) / 2)
+    draw_text(frame, badge_text, text_x, text_y, (255, 255, 255), 0.5, 2)
+
+    # Left panel - System Diagnostics (Glassmorphic dark block)
     panel_x = 20
     panel_y = 95
-    panel_w = 340
-    panel_h = 265
+    panel_w = 380
+    panel_h = 280
 
     overlay = frame.copy()
-    cv2.rectangle(overlay, (panel_x, panel_y), (panel_x + panel_w, panel_y + panel_h), (20, 20, 20), -1)
-    frame[:] = cv2.addWeighted(overlay, 0.45, frame, 0.55, 0)
+    cv2.rectangle(overlay, (panel_x, panel_y), (panel_x + panel_w, panel_y + panel_h), (12, 12, 12), -1)
+    cv2.addWeighted(overlay, 0.70, frame, 0.30, 0, dst=frame)
+    # Thin panel borders
+    cv2.rectangle(frame, (panel_x, panel_y), (panel_x + panel_w, panel_y + panel_h), (60, 60, 60), 1, cv2.LINE_AA)
 
-    draw_text(frame, "Live Metrics", panel_x + 15, panel_y + 30, (255, 255, 255), 0.7, 2)
+    # Sub-header for Diagnostics
+    draw_text(frame, "DIAGNOSTICS & TELEMETRY", panel_x + 15, panel_y + 30, (255, 255, 255), 0.55, 2)
+    cv2.line(frame, (panel_x + 15, panel_y + 40), (panel_x + panel_w - 15, panel_y + 40), (50, 50, 50), 1, cv2.LINE_AA)
 
-    metrics = [
-        f"FPS: {payload['fps']}",
-        f"Face Detected: {payload['faceDetected']}",
-        f"EAR: {payload['ear']}",
-        f"MAR: {payload['mar']}",
-        f"PERCLOS: {payload['perclos']}%",
-        f"Blink Rate: {payload['blinkRatePerMin']}/min",
-        f"Eye Closed: {payload['eyeClosedSeconds']}s",
-        f"Yawn Active: {payload['yawnActive']}",
-        f"Yawn Count: {payload['yawnCount']}",
-        f"Face Lost: {payload['faceLostSeconds']}s"
+    # Align metrics in columns (Label -> Value)
+    metrics_left = [
+        ("FPS", f"{payload['fps']:.1f}"),
+        ("FACE DETECTED", "YES" if payload["faceDetected"] else "NO"),
+        ("EYE APERTURE (EAR)", f"{payload['ear']:.2f}"),
+        ("MOUTH APERTURE (MAR)", f"{payload['mar']:.2f}"),
+        ("PERCLOS SCORE", f"{payload['perclos']}%"),
+    ]
+    metrics_right = [
+        ("BLINK RATE", f"{payload['blinkRatePerMin']:.0f}/m"),
+        ("EYE CLOSED TIME", f"{payload['eyeClosedSeconds']:.1f}s"),
+        ("YAWN ACTIVE", "YES" if payload["yawnActive"] else "NO"),
+        ("YAWN COUNT", f"{payload['yawnCount']}"),
+        ("FACE LOST TIME", f"{payload['faceLostSeconds']:.1f}s"),
     ]
 
-    y = panel_y + 60
-    for item in metrics:
-        draw_text(frame, item, panel_x + 15, y, (230, 230, 230), 0.52, 1)
-        y += 22
+    # Draw diagnostics rows
+    y = panel_y + 65
+    for label, val in metrics_left:
+        # Label (darker gray)
+        draw_text(frame, label, panel_x + 15, y, (150, 150, 150), 0.40, 1)
+        # Value (white, right-aligned relative to first column boundary at panel_x + 175)
+        (val_w, _), _ = cv2.getTextSize(val, cv2.FONT_HERSHEY_SIMPLEX, 0.42, 1)
+        draw_text(frame, val, panel_x + 175 - val_w, y, (255, 255, 255), 0.42, 1)
+        y += 20
 
-    # Right panel
-    right_x = width - 370
+    y = panel_y + 65
+    for label, val in metrics_right:
+        # Label
+        draw_text(frame, label, panel_x + 185, y, (150, 150, 150), 0.40, 1)
+        # Value
+        (val_w, _), _ = cv2.getTextSize(val, cv2.FONT_HERSHEY_SIMPLEX, 0.42, 1)
+        val_color = (255, 255, 255)
+        # Highlight anomalous values
+        if label == "EYE CLOSED TIME" and float(val[:-1]) > 0.0:
+            val_color = (100, 100, 255) # Light red/orange in BGR
+        elif label == "FACE LOST TIME" and float(val[:-1]) > 0.0:
+            val_color = (100, 100, 255)
+        draw_text(frame, val, panel_x + panel_w - 15 - val_w, y, val_color, 0.42, 1)
+        y += 20
+
+    # Quick summary metrics indicators (dynamic color bars)
+    bar_y = panel_y + 180
+    
+    # EAR status visual bar
+    draw_text(frame, "EAR threshold (0.23)", panel_x + 15, bar_y, (180, 180, 180), 0.38, 1)
+    ear_val = payload["ear"]
+    ear_pct = min(1.0, max(0.0, ear_val / 0.5))
+    cv2.rectangle(frame, (panel_x + 15, bar_y + 6), (panel_x + panel_w - 15, bar_y + 12), (30, 30, 30), -1)
+    ear_color = (100, 255, 100) if ear_val >= 0.23 else (100, 100, 255)
+    cv2.rectangle(frame, (panel_x + 15, bar_y + 6), (panel_x + 15 + int(ear_pct * (panel_w - 30)), bar_y + 12), ear_color, -1)
+    cv2.rectangle(frame, (panel_x + 15, bar_y + 6), (panel_x + panel_w - 15, bar_y + 12), (70, 70, 70), 1, cv2.LINE_AA)
+    # Threshold indicator notch
+    notch_x = panel_x + 15 + int((0.23 / 0.5) * (panel_w - 30))
+    cv2.line(frame, (notch_x, bar_y + 4), (notch_x, bar_y + 14), (255, 255, 255), 1)
+
+    bar_y += 35
+    # MAR status visual bar
+    draw_text(frame, "MAR threshold (0.60)", panel_x + 15, bar_y, (180, 180, 180), 0.38, 1)
+    mar_val = payload["mar"]
+    mar_pct = min(1.0, max(0.0, mar_val / 1.0))
+    cv2.rectangle(frame, (panel_x + 15, bar_y + 6), (panel_x + panel_w - 15, bar_y + 12), (30, 30, 30), -1)
+    mar_color = (100, 255, 100) if mar_val < 0.60 else (100, 100, 255)
+    cv2.rectangle(frame, (panel_x + 15, bar_y + 6), (panel_x + 15 + int(mar_pct * (panel_w - 30)), bar_y + 12), mar_color, -1)
+    cv2.rectangle(frame, (panel_x + 15, bar_y + 6), (panel_x + panel_w - 15, bar_y + 12), (70, 70, 70), 1, cv2.LINE_AA)
+    # Threshold indicator notch
+    notch_x = panel_x + 15 + int((0.60 / 1.0) * (panel_w - 30))
+    cv2.line(frame, (notch_x, bar_y + 4), (notch_x, bar_y + 14), (255, 255, 255), 1)
+
+    # Right panel - Head Pose & Event Logs
+    right_w = 390
+    right_x = width - right_w - 20
     right_y = 95
-    right_w = 350
-    right_h = 210
+    right_h = 280
 
     overlay = frame.copy()
-    cv2.rectangle(overlay, (right_x, right_y), (right_x + right_w, right_y + right_h), (20, 20, 20), -1)
-    frame[:] = cv2.addWeighted(overlay, 0.45, frame, 0.55, 0)
+    cv2.rectangle(overlay, (right_x, right_y), (right_x + right_w, right_y + right_h), (12, 12, 12), -1)
+    cv2.addWeighted(overlay, 0.70, frame, 0.30, 0, dst=frame)
+    cv2.rectangle(frame, (right_x, right_y), (right_x + right_w, right_y + right_h), (60, 60, 60), 1, cv2.LINE_AA)
 
-    draw_text(frame, "Head Pose", right_x + 15, right_y + 30, (255, 255, 255), 0.7, 2)
+    # Sub-header for Orientation
+    draw_text(frame, "HEAD ORIENTATION & POSE", right_x + 15, right_y + 30, (255, 255, 255), 0.55, 2)
+    cv2.line(frame, (right_x + 15, right_y + 40), (right_x + right_w - 15, right_y + 40), (50, 50, 50), 1, cv2.LINE_AA)
 
     head = payload["headPose"]
-    draw_text(frame, f"Pitch: {head['pitch']} deg", right_x + 15, right_y + 65, (230, 230, 230), 0.55, 1)
-    draw_text(frame, f"Yaw:   {head['yaw']} deg", right_x + 15, right_y + 90, (230, 230, 230), 0.55, 1)
-    draw_text(frame, f"Roll:  {head['roll']} deg", right_x + 15, right_y + 115, (230, 230, 230), 0.55, 1)
+    pitch, yaw, roll = head["pitch"], head["yaw"], head["roll"]
 
-    draw_text(frame, "Event Reason:", right_x + 15, right_y + 150, (255, 255, 255), 0.55, 1)
+    # Yaw & Pitch crosshair widget
+    widget_r = 45
+    widget_cx = right_x + right_w - 65
+    widget_cy = right_y + 105
+    # Draw radar circles
+    cv2.circle(frame, (widget_cx, widget_cy), widget_r, (60, 60, 60), 1, cv2.LINE_AA)
+    cv2.circle(frame, (widget_cx, widget_cy), int(widget_r / 2), (40, 40, 40), 1, cv2.LINE_AA)
+    # Axes
+    cv2.line(frame, (widget_cx - widget_r, widget_cy), (widget_cx + widget_r, widget_cy), (50, 50, 50), 1)
+    cv2.line(frame, (widget_cx, widget_cy - widget_r), (widget_cx, widget_cy + widget_r), (50, 50, 50), 1)
 
+    # Map pitch/yaw to target space (clamped max yaw=35, pitch=25)
+    # Yaw maps to X axis, Pitch maps to Y axis (positive yaw is looking left, positive pitch is looking down/up depending on frame coordinate direction)
+    norm_x = min(1.0, max(-1.0, yaw / 35.0))
+    norm_y = min(1.0, max(-1.0, pitch / 25.0))
+    cross_x = widget_cx + int(norm_x * widget_r)
+    cross_y = widget_cy + int(norm_y * widget_r)
+
+    # Crosshair dot
+    cross_color = (100, 255, 100)
+    # Determine if head is out of limits
+    head_state_desc = "CENTERED"
+    if abs(yaw) >= config.HEAD_YAW_WARNING or abs(pitch) >= config.HEAD_PITCH_WARNING:
+        cross_color = (100, 100, 255)
+        if abs(yaw) >= config.HEAD_YAW_WARNING:
+            head_state_desc = "DISTRACTED L/R"
+        else:
+            head_state_desc = "DISTRACTED U/D"
+
+    # Draw indicator target crosshair dot
+    cv2.circle(frame, (cross_x, cross_y), 5, cross_color, -1, cv2.LINE_AA)
+    cv2.circle(frame, (cross_x, cross_y), 9, (255, 255, 255), 1, cv2.LINE_AA)
+
+    # Text metrics for Head Pose
+    draw_text(frame, f"PITCH: {pitch:+.1f} deg", right_x + 15, right_y + 65, (220, 220, 220), 0.42, 1)
+    draw_text(frame, f"YAW:   {yaw:+.1f} deg", right_x + 15, right_y + 87, (220, 220, 220), 0.42, 1)
+    draw_text(frame, f"ROLL:  {roll:+.1f} deg", right_x + 15, right_y + 109, (220, 220, 220), 0.42, 1)
+    
+    # Orientation status label
+    draw_text(frame, "STATUS: ", right_x + 15, right_y + 135, (150, 150, 150), 0.42, 1)
+    draw_text(frame, head_state_desc, right_x + 75, right_y + 135, cross_color, 0.42, 2)
+
+    # Horizontal divider
+    cv2.line(frame, (right_x + 15, right_y + 155), (right_x + right_w - 15, right_y + 155), (50, 50, 50), 1, cv2.LINE_AA)
+
+    # Event Reason
+    draw_text(frame, "DIAGNOSTIC STATUS LOG", right_x + 15, right_y + 175, (255, 255, 255), 0.50, 2)
+    
     reason = payload["eventReason"]
-    wrapped_reason = wrap_text(reason, max_chars=38)
-
-    reason_y = right_y + 175
+    wrapped_reason = wrap_text(reason, max_chars=36)
+    
+    reason_y = right_y + 198
     for line in wrapped_reason:
-        draw_text(frame, line, right_x + 15, reason_y, colour, 0.48, 1)
-        reason_y += 20
+        # Event details text
+        draw_text(frame, line, right_x + 15, reason_y, colour, 0.42, 1)
+        reason_y += 18
 
     # Bottom instruction bar
-    draw_filled_box(frame, 0, height - 45, width, height, (35, 35, 35))
+    draw_filled_box(frame, 0, height - 40, width, height, (20, 20, 20))
+    cv2.line(frame, (0, height - 40), (width, height - 40), (60, 60, 60), 1, cv2.LINE_AA)
     draw_text(
         frame,
-        "Press Q or ESC to exit | This CV fatigue score maps to the Wokwi potentiometer value",
+        "Controls: [Q]/[ESC] Exit  |  [C] Calibrate Head Pose  |  Fatigue score bridges to Wokwi Simulator Potentiometer",
         20,
         height - 15,
-        (255, 255, 255),
-        0.55,
+        (180, 180, 180),
+        0.42,
         1
     )
 
     # Critical warning banner
     if state in ["ALARM", "CRITICAL", "CAMERA_LOST"]:
-        banner_y = height - 95
-        draw_filled_box(frame, 0, banner_y, width, banner_y + 45, colour)
+        banner_y = height - 90
+        # Translucent dark backing behind warning line
+        banner_overlay = frame.copy()
+        draw_filled_box(banner_overlay, 0, banner_y, width, banner_y + 50, (15, 15, 15))
+        cv2.addWeighted(banner_overlay, 0.4, frame, 0.6, 0, dst=frame)
+        
+        # Outer thick status colored block
+        draw_filled_box(frame, 0, banner_y, 10, banner_y + 50, colour)
+        cv2.line(frame, (0, banner_y), (width, banner_y), colour, 1, cv2.LINE_AA)
+        
         if state == "CRITICAL":
-            warning_text = "CRITICAL DRIVER STATE DETECTED - EMBEDDED SYSTEM SHOULD ESCALATE TO EMERGENCY"
+            warning_text = "CRITICAL STATE: EMERGENCY THRESHOLD BREACHED - TRIGGERING ESCALATION ROUTINE"
         elif state == "CAMERA_LOST":
-            warning_text = "CAMERA / FACE LOST - DRIVER VISIBILITY PROBLEM"
+            warning_text = "VISIBILITY ALERT: NO FACE DETECTED - MONITORING INACTIVE"
         else:
-            warning_text = "ALARM - STRONG SIGNS OF DROWSINESS OR DISTRACTION"
-        draw_text(frame, warning_text, 20, banner_y + 30, (255, 255, 255), 0.65, 2)
+            warning_text = "ATTENTION WARNING: HIGH FATIGUE SCORE OR PROLONGED DISTRACTION DETECTED"
+        draw_text(frame, warning_text, 25, banner_y + 32, colour, 0.50, 2)
+
+    # Calibration Overlay / Banner
+    if payload.get("isCalibrating"):
+        # Draw a beautiful glassmorphic prompt in the center/upper area of the camera feed
+        prompt_w = 420
+        prompt_h = 65
+        prompt_x = int((width - prompt_w) / 2)
+        prompt_y = header_h + 30
+        
+        prompt_overlay = frame.copy()
+        cv2.rectangle(prompt_overlay, (prompt_x, prompt_y), (prompt_x + prompt_w, prompt_y + prompt_h), (25, 20, 10), -1)
+        cv2.addWeighted(prompt_overlay, 0.8, frame, 0.2, 0, dst=frame)
+        cv2.rectangle(frame, (prompt_x, prompt_y), (prompt_x + prompt_w, prompt_y + prompt_h), (235, 140, 20), 1, cv2.LINE_AA)
+        
+        pct = int(payload.get("calibrationProgress", 0.0) * 100)
+        draw_text(frame, f"CALIBRATING HEAD POSE - LOOK STRAIGHT ({pct}%)", prompt_x + 20, prompt_y + 25, (255, 255, 255), 0.42, 1)
+        
+        # Draw a tiny progress bar inside prompt box
+        pbar_y = prompt_y + 40
+        pbar_w = prompt_w - 40
+        pbar_h = 6
+        cv2.rectangle(frame, (prompt_x + 20, pbar_y), (prompt_x + 20 + pbar_w, pbar_y + pbar_h), (40, 40, 40), -1)
+        cv2.rectangle(frame, (prompt_x + 20, pbar_y), (prompt_x + 20 + int((pct / 100.0) * pbar_w), pbar_y + pbar_h), (235, 140, 20), -1)
+        cv2.rectangle(frame, (prompt_x + 20, pbar_y), (prompt_x + 20 + pbar_w, pbar_y + pbar_h), (80, 80, 80), 1, cv2.LINE_AA)
 
 
 def wrap_text(text, max_chars=40):
@@ -959,9 +1252,9 @@ def wrap_text(text, max_chars=40):
         lines.append(current)
 
     if not lines:
-        lines.append("None")
+        lines.append("Telemetry Nominal")
 
-    return lines[:3]
+    return lines[:4]
 
 
 # ============================================================
@@ -1006,17 +1299,17 @@ def open_video_source(args):
     if args.video:
         cap = cv2.VideoCapture(args.video)
         print(f"Using video file: {args.video}")
+        if not cap.isOpened():
+            raise RuntimeError("Could not open video file.")
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, config.FRAME_WIDTH)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config.FRAME_HEIGHT)
+        return cap
     else:
-        cap = cv2.VideoCapture(args.camera)
         print(f"Using webcam index: {args.camera}")
-
-    if not cap.isOpened():
-        raise RuntimeError("Could not open camera or video source.")
-
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, config.FRAME_WIDTH)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config.FRAME_HEIGHT)
-
-    return cap
+        cap = RealTimeVideoCapture(args.camera, config.FRAME_WIDTH, config.FRAME_HEIGHT)
+        if not cap.isOpened():
+            raise RuntimeError("Could not open webcam.")
+        return cap
 
 
 def main():
@@ -1119,6 +1412,8 @@ def main():
 
             if key == ord("q") or key == 27:
                 break
+            elif key == ord("c") or key == ord("C"):
+                monitor.trigger_recalibration()
 
     finally:
         cap.release()

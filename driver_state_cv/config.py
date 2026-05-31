@@ -15,8 +15,8 @@ represents the same 0-100 fatigue score.
 # ============================================================
 
 CAMERA_INDEX = 0
-FRAME_WIDTH = 960
-FRAME_HEIGHT = 540
+FRAME_WIDTH = 1280
+FRAME_HEIGHT = 720
 WINDOW_NAME = "Smart Driver State Monitoring - Computer Vision Demo"
 
 SHOW_LANDMARK_POINTS = False
@@ -89,6 +89,9 @@ HEAD_ROLL_ALARM = 28.0
 
 HEAD_POSE_WARNING_SECONDS = 1.5
 HEAD_POSE_ALARM_SECONDS = 3.0
+
+# Number of frames to average for baseline offset calibration.
+POSE_CALIBRATION_FRAMES = 90
 
 # ============================================================
 # Face Lost Configuration
