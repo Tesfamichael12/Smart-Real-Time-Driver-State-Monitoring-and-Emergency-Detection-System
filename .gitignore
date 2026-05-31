@@ -1,49 +1,20 @@
- # Node modules
- node_modules/
+# Shared ignores for both app folders
 
- # Build outputs
- build/
- dist/
- out/
+# Node / frontend artifacts
+node_modules/
+dist/
+build/
+out/
+coverage/
+.nyc_output/
+.vite/
+.parcel-cache/
+.turbo/
+.next/
+.cache/
+.eslintcache
 
- # Local env files
- .env
- .env.local
- .env.*.local
-
- # Logs
- npm-debug.log*
- yarn-debug.log*
- yarn-error.log*
- pnpm-debug.log*
-
- # Testing
- coverage/
- .nyc_output/
-
- # Editor/IDE
- .vscode/
- .idea/
- *.sublime-workspace
-
- # OS files
- .DS_Store
- Thumbs.db
-
- # Misc
- .parcel-cache/
- .cache/
- .next/
- .turbo/
- *.local
-
- # Static analysis
- .eslintcache
-
- # Lock files (if you prefer to ignore lockfiles, otherwise remove)
- # package-lock.json
- # yarn.lock
-
+# Python artifacts
 __pycache__/
 *.py[cod]
 *.so
@@ -52,33 +23,35 @@ env/
 venv/
 .venv/
 pip-wheel-metadata/
-build/
-dist/
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-.cache/
 
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Jupyter
-.ipynb_checkpoints/
+# Local env files
+.env
+.env.local
+.env.*.local
 
 # Logs and runtime files
 *.log
 *.out
 *.err
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# Project artifacts
+# Editor / OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Project-generated artifacts
+logs/
 models/
 checkpoints/
 outputs/
@@ -89,4 +62,6 @@ data/
 *.avi
 *.mov
 *.mkv
+
+# Optional lockfiles remain tracked by default.
 
