@@ -2,127 +2,268 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================
+   Google Fonts
+   ============================ */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
 @layer base {
   * {
     @apply border-white/10;
   }
 
-  body {
-    @apply bg-black text-white/90 font-sans;
+  html {
+    /* Lenis handles smooth scroll — do NOT set scroll-behavior: smooth here
+       when Lenis is active, as it can conflict */
+    scroll-behavior: auto;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
+  body {
+    @apply bg-black text-white/90;
+    font-family: 'Montserrat', system-ui, sans-serif;
+    line-height: 1.6;
+  }
+
+  /* Custom Scrollbar */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-black;
+    background: #0a0a0a;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
+    background: rgba(255,255,255,0.08);
+    border-radius: 99px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.18);
   }
 
   ::selection {
-    @apply bg-white/20 text-white;
+    background: rgba(6,182,212,0.25);
+    color: white;
   }
 }
 
+/* ============================
+   Display / Heading Utilities
+   ============================ */
+.font-display {
+  font-family: 'Outfit', Montserrat, sans-serif;
+}
+
+/* ============================
+   Component Layer
+   ============================ */
 @layer components {
+
+  /* --- Glass Cards --- */
   .glass-card {
-    @apply bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl;
+    @apply bg-white/[0.035] backdrop-blur-2xl border border-white/[0.08] rounded-2xl;
   }
 
   .glass-card-strong {
-    @apply bg-white/[0.06] backdrop-blur-xl border border-white/10 rounded-2xl;
+    @apply bg-white/[0.06] backdrop-blur-2xl border border-white/[0.10] rounded-2xl;
   }
 
   .glass-card-hover {
-    @apply hover:bg-white/[0.08] transition-all duration-300;
+    @apply hover:bg-white/[0.08] hover:border-white/[0.15] transition-all duration-300;
   }
 
+  .glass-card-accent {
+    position: relative;
+    @apply bg-white/[0.04] backdrop-blur-2xl rounded-2xl overflow-hidden;
+  }
+
+  .glass-card-accent::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(6,182,212,0.3), rgba(255,255,255,0.05), rgba(59,130,246,0.2));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* --- Glow Effects --- */
   .glow-border {
-    @apply border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)];
+    @apply border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.04)];
   }
 
+  .glow-cyan {
+    box-shadow: 0 0 20px rgba(6,182,212,0.2), 0 0 60px rgba(6,182,212,0.08);
+  }
+
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(59,130,246,0.2), 0 0 60px rgba(59,130,246,0.08);
+  }
+
+  /* --- Text Gradients --- */
   .text-gradient {
-    @apply bg-gradient-to-r from-white via-white/80 to-white/60 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-white via-white/90 to-white/60 bg-clip-text text-transparent;
   }
 
+  .text-gradient-cyan {
+    background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 40%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-hero {
+    background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 30%, #7dd3fc 70%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* --- Navigation --- */
   .nav-link {
-    @apply text-white/60 hover:text-white transition-colors duration-200 text-sm font-medium;
+    @apply text-white/50 hover:text-white/90 transition-colors duration-200 text-sm font-medium cursor-pointer;
+    font-family: 'Montserrat', sans-serif;
   }
 
   .nav-link-active {
     @apply text-white;
   }
 
+  /* --- Buttons --- */
   .btn-primary {
-    @apply bg-white text-black px-6 py-3 rounded-xl font-semibold text-sm
-           hover:bg-white/90 active:bg-white/80 transition-all duration-200
-           shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)];
+    @apply relative px-7 py-3 rounded-xl font-semibold text-sm cursor-pointer
+           bg-white text-black
+           hover:bg-white/95 active:scale-[0.98]
+           transition-all duration-200
+           shadow-[0_0_25px_rgba(255,255,255,0.12)]
+           hover:shadow-[0_0_40px_rgba(255,255,255,0.22)];
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: -0.01em;
+  }
+
+  .btn-primary-cyan {
+    @apply relative px-7 py-3.5 rounded-xl font-semibold text-sm cursor-pointer
+           text-black transition-all duration-200 active:scale-[0.98];
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    box-shadow: 0 0 30px rgba(6,182,212,0.3), 0 4px 16px rgba(0,0,0,0.3);
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .btn-primary-cyan:hover {
+    box-shadow: 0 0 50px rgba(6,182,212,0.5), 0 4px 24px rgba(0,0,0,0.4);
+    transform: translateY(-1px);
   }
 
   .btn-secondary {
     @apply border border-white/20 text-white/80 px-6 py-3 rounded-xl font-semibold text-sm
-           hover:bg-white/5 hover:border-white/30 transition-all duration-200;
+           hover:bg-white/5 hover:border-white/30 hover:text-white
+           transition-all duration-200 cursor-pointer;
+    font-family: 'Montserrat', sans-serif;
   }
 
   .btn-ghost {
-    @apply text-white/60 hover:text-white px-4 py-2 rounded-lg text-sm font-medium
-           hover:bg-white/5 transition-all duration-200;
+    @apply text-white/50 hover:text-white px-4 py-2 rounded-lg text-sm font-medium
+           hover:bg-white/5 transition-all duration-200 cursor-pointer;
   }
 
+  /* --- Section Headings --- */
   .section-title {
-    @apply text-4xl md:text-5xl font-bold tracking-tight;
+    font-family: 'Outfit', Montserrat, sans-serif;
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05];
+    letter-spacing: -0.03em;
+  }
+
+  .section-title-xl {
+    font-family: 'Outfit', Montserrat, sans-serif;
+    @apply text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.0];
+    letter-spacing: -0.04em;
   }
 
   .section-subtitle {
-    @apply text-lg text-white/50 max-w-2xl mx-auto;
+    @apply text-lg text-white/50 max-w-2xl mx-auto leading-relaxed;
+    font-family: 'Montserrat', sans-serif;
   }
 
+  /* --- State Badges --- */
   .state-badge {
     @apply px-3 py-1 rounded-lg text-xs font-semibold tracking-wider uppercase;
+    font-family: 'Montserrat', sans-serif;
   }
 
   .state-normal {
-    @apply bg-state-normal/10 text-state-normal border border-state-normal/20;
+    @apply bg-state-normal/10 text-state-normal border border-state-normal/25;
   }
 
   .state-warning {
-    @apply bg-state-warning/10 text-state-warning border border-state-warning/20;
+    @apply bg-state-warning/10 text-state-warning border border-state-warning/25;
   }
 
   .state-alarm {
-    @apply bg-state-alarm/10 text-state-alarm border border-state-alarm/20;
+    @apply bg-state-alarm/10 text-state-alarm border border-state-alarm/25;
   }
 
   .state-emergency {
-    @apply bg-state-emergency/10 text-state-emergency border border-state-emergency/20;
+    @apply bg-state-emergency/10 text-state-emergency border border-state-emergency/25;
   }
 
   .state-muted {
-    @apply bg-state-muted/10 text-state-muted border border-state-muted/20;
+    @apply bg-state-muted/10 text-state-muted border border-state-muted/25;
   }
 
+  /* --- Metric Cards --- */
   .metric-card {
-    @apply glass-card p-4 md:p-5;
+    @apply glass-card p-5;
   }
 
   .metric-label {
-    @apply text-xs font-medium text-white/40 uppercase tracking-wider;
+    @apply text-[10px] font-medium text-white/35 uppercase tracking-widest;
+    font-family: 'Montserrat', sans-serif;
   }
 
   .metric-value {
+    font-family: 'Outfit', Montserrat, sans-serif;
     @apply text-2xl md:text-3xl font-bold tracking-tight;
+    letter-spacing: -0.02em;
   }
 
   .pulse-dot {
     @apply w-2 h-2 rounded-full animate-pulse-fast;
   }
+
+  /* --- Reveal Animation (IntersectionObserver triggered) --- */
+  .reveal-item {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal-item.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Stagger helpers */
+  .reveal-delay-1 { transition-delay: 80ms; }
+  .reveal-delay-2 { transition-delay: 160ms; }
+  .reveal-delay-3 { transition-delay: 240ms; }
+  .reveal-delay-4 { transition-delay: 320ms; }
+  .reveal-delay-5 { transition-delay: 400ms; }
+  .reveal-delay-6 { transition-delay: 480ms; }
 }
 
+/* ============================
+   Utility Layer
+   ============================ */
 @layer utilities {
   .animate-delay-100 { animation-delay: 100ms; }
   .animate-delay-200 { animation-delay: 200ms; }
@@ -133,23 +274,16 @@
   .animate-delay-1000 { animation-delay: 1000ms; }
 }
 
-/* Smooth scrolling — applies to all scrollable containers */
-html {
-  scroll-behavior: smooth;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  html {
-    scroll-behavior: smooth;
-  }
-}
-
-/* Scroll margin for sections with fixed navbar */
+/* ============================
+   Global Scroll Margin
+   ============================ */
 section[id] {
-  scroll-margin-top: 5rem;
+  scroll-margin-top: 5.5rem;
 }
 
-/* Architecture SVG animations */
+/* ============================
+   Architecture SVG
+   ============================ */
 .arch-node {
   transition: all 0.3s ease;
 }
@@ -158,83 +292,154 @@ section[id] {
   transform: scale(1.05);
 }
 
-/* State machine transitions */
+/* ============================
+   State Machine
+   ============================ */
 .state-transition {
   stroke-dasharray: 8, 4;
   animation: dashFlow 1s linear infinite;
 }
 
 @keyframes dashFlow {
-  to {
-    stroke-dashoffset: -12;
-  }
+  to { stroke-dashoffset: -12; }
 }
 
-/* Map grid styles */
+/* ============================
+   Map Styles
+   ============================ */
 .map-grid {
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
-/* SOS blink */
+/* ============================
+   SOS Blink
+   ============================ */
 .sos-blink {
   animation: sosBlink 0.5s ease-in-out infinite alternate;
 }
 
 @keyframes sosBlink {
-  0% { opacity: 1; text-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
-  100% { opacity: 0.6; text-shadow: 0 0 40px rgba(239, 68, 68, 0.8); }
+  0% { opacity: 1; text-shadow: 0 0 20px rgba(239,68,68,0.6); }
+  100% { opacity: 0.5; text-shadow: 0 0 40px rgba(239,68,68,0.9); }
 }
 
-/* Scroll indicator */
+/* ============================
+   Scroll Indicator
+   ============================ */
 .scroll-indicator {
-  animation: scrollBounce 2s ease-in-out infinite;
+  animation: scrollBounce 2.5s ease-in-out infinite;
 }
 
 @keyframes scrollBounce {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(8px); }
+  50% { transform: translateY(10px); }
 }
 
-/* Alert slide-in animation */
+/* ============================
+   Alert Slide-In
+   ============================ */
 .alert-enter {
-  animation: alertSlideIn 0.3s ease-out;
+  animation: alertSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes alertSlideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(110%); opacity: 0; }
+  to   { transform: translateX(0);   opacity: 1; }
 }
 
-/* Gauge ring */
+/* ============================
+   Gauge Ring
+   ============================ */
 .gauge-ring {
-  transition: stroke-dashoffset 0.5s ease;
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Emergency banner pulse */
+/* ============================
+   Emergency Pulse
+   ============================ */
 .emergency-pulse {
   animation: emergencyPulse 1s ease-in-out infinite;
 }
 
 @keyframes emergencyPulse {
-  0%, 100% { border-color: rgba(239, 68, 68, 0.3); }
-  50% { border-color: rgba(239, 68, 68, 0.8); }
+  0%, 100% { border-color: rgba(239,68,68,0.25); box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+  50%       { border-color: rgba(239,68,68,0.7);  box-shadow: 0 0 20px rgba(239,68,68,0.2); }
 }
 
-/* Vehicle marker pulse on map */
+/* ============================
+   Vehicle Marker
+   ============================ */
 .vehicle-marker {
-  animation: markerPulse 2s ease-in-out infinite;
+  animation: markerPulse 2.5s ease-in-out infinite;
 }
 
 @keyframes markerPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3); }
-  50% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); }
+  50%       { box-shadow: 0 0 0 8px rgba(255,255,255,0); }
+}
+
+/* ============================
+   Noise Texture Overlay
+   ============================ */
+.noise-overlay {
+  position: relative;
+}
+
+.noise-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ============================
+   Shimmer (loading skeleton)
+   ============================ */
+.shimmer-bg {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.0) 0%,
+    rgba(255,255,255,0.06) 50%,
+    rgba(255,255,255,0.0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* ============================
+   Reduced Motion
+   ============================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .reveal-item {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ============================
+   Grid Dot Background
+   ============================ */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { cn } from '../../lib/utils'
+import RevealSection from '../shared/RevealSection'
 
 interface StateDef {
   id: string
@@ -43,12 +44,15 @@ export default function StateMachineSection() {
   return (
     <section className="relative py-24 md:py-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="section-title mb-4">System State Machine</h2>
+        <RevealSection className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs text-white/40 mb-6 font-mono tracking-wider uppercase">
+            State Transitions
+          </div>
+          <h2 className="section-title font-display mb-5">System State Machine</h2>
           <p className="section-subtitle">
             Five-state alert system with configurable thresholds and automatic transitions
           </p>
-        </div>
+        </RevealSection>
 
         {/* State Nodes */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">

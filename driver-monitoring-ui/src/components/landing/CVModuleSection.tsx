@@ -1,4 +1,5 @@
 import { Eye, MessageSquare, Clock, Activity, Brain, Camera, AlertTriangle, Gauge } from 'lucide-react'
+import RevealSection from '../shared/RevealSection'
 
 const features = [
   { icon: Eye, title: 'EAR Detection', desc: 'Eye Aspect Ratio measures eyelid closure with precision. Threshold-based blink and drowsiness detection.', color: 'text-cyan-400' },
@@ -15,12 +16,15 @@ export default function CVModuleSection() {
   return (
     <section id="cv-module" className="relative py-24 md:py-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="section-title mb-4">Computer Vision Module</h2>
+        <RevealSection className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs text-white/40 mb-6 font-mono tracking-wider uppercase">
+            AI Detection
+          </div>
+          <h2 className="section-title font-display mb-5">Computer Vision Module</h2>
           <p className="section-subtitle">
             MediaPipe Face Mesh-powered driver monitoring with 8 distinct detection capabilities
           </p>
-        </div>
+        </RevealSection>
 
         <div className="grid lg:grid-cols-2 gap-8 items-start">
           {/* Feature Cards */}
@@ -34,7 +38,7 @@ export default function CVModuleSection() {
                 <div className={`w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 group-hover:bg-white/10 transition-colors`}>
                   <feat.icon className={`w-5 h-5 ${feat.color}`} />
                 </div>
-                <h3 className="text-sm font-semibold mb-1.5">{feat.title}</h3>
+                <h3 className="font-display text-sm font-bold mb-1.5 tracking-tight">{feat.title}</h3>
                 <p className="text-xs text-white/40 leading-relaxed">{feat.desc}</p>
               </div>
             ))}

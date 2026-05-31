@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Camera, Monitor, Eye, Brain, Activity, Cpu, MapPin, Wifi, AlertTriangle, Gauge } from 'lucide-react'
+import RevealSection from '../shared/RevealSection'
 
 const nodes = [
   { id: 'camera', label: 'Camera / Video Input', icon: Camera, color: 'text-cyan-400', border: 'border-cyan-400/30', bg: 'bg-cyan-400/10', desc: 'Webcam or video file input captured via OpenCV at configurable resolution (default 640x480).' },
@@ -35,12 +36,15 @@ export default function ArchitectureSection() {
       <div className="absolute inset-0 bg-gradient-to-b from-black via-white/[0.01] to-black" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="section-title mb-4">System Architecture</h2>
+        <RevealSection className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs text-white/40 mb-6 font-mono tracking-wider uppercase">
+            System Design
+          </div>
+          <h2 className="section-title font-display mb-5">System Architecture</h2>
           <p className="section-subtitle">
             From camera input to emergency response — a complete data pipeline
           </p>
-        </div>
+        </RevealSection>
 
         {/* Architecture Flow Diagram */}
         <div className="glass-card-strong p-6 md:p-10 overflow-x-auto">

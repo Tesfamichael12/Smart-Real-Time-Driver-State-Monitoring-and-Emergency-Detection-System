@@ -1,4 +1,5 @@
 import { Cpu, Gauge, MapPin, Wifi, Monitor, Bell, Volume2, ShieldOff } from 'lucide-react'
+import RevealSection from '../shared/RevealSection'
 
 const components = [
   { icon: Cpu, title: 'ESP32 Controller', desc: 'Dual-core microcontroller managing the state machine, sensor fusion, and communication.', color: 'text-amber-400' },
@@ -17,12 +18,15 @@ export default function EmbeddedSection() {
       <div className="absolute inset-0 bg-gradient-to-b from-black via-white/[0.01] to-black" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="section-title mb-4">Embedded Emergency System</h2>
+        <RevealSection className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs text-white/40 mb-6 font-mono tracking-wider uppercase">
+            Hardware Layer
+          </div>
+          <h2 className="section-title font-display mb-5">Embedded Emergency System</h2>
           <p className="section-subtitle">
             ESP32-based hardware system with MPU6050, GPS, and GSM/SOS simulation
           </p>
-        </div>
+        </RevealSection>
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Component Cards */}
@@ -36,7 +40,7 @@ export default function EmbeddedSection() {
                 <div className={`w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 group-hover:bg-white/10`}>
                   <comp.icon className={`w-5 h-5 ${comp.color}`} />
                 </div>
-                <h3 className="text-sm font-semibold mb-1">{comp.title}</h3>
+                <h3 className="font-display text-sm font-bold mb-1 tracking-tight">{comp.title}</h3>
                 <p className="text-xs text-white/40 leading-relaxed">{comp.desc}</p>
               </div>
             ))}

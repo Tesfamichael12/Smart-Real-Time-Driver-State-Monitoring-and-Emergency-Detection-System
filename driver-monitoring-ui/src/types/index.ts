@@ -64,6 +64,9 @@ export interface SimulationState {
   emergencyActive: boolean
   emergencyVehicleId: string | null
   selectedDriverId: string | null
+  scenario: string
+  sosCountdown: number
+  gsmLog: string[]
 }
 
 export interface SimulationControls {

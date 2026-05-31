@@ -1,15 +1,19 @@
 import { Eye, Bell, ArrowDown } from 'lucide-react'
+import RevealSection from '../shared/RevealSection'
 
 export default function SolutionSection() {
   return (
     <section className="relative py-24 md:py-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16 md:mb-20">
-          <h2 className="section-title mb-4">Two-Tier Safety Strategy</h2>
+        <RevealSection className="text-center mb-16 md:mb-20">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs text-white/40 mb-6 font-mono tracking-wider uppercase">
+            The Solution
+          </div>
+          <h2 className="section-title mb-5 font-display">Two-Tier Safety Strategy</h2>
           <p className="section-subtitle">
             A comprehensive approach combining preventive and reactive safety layers
           </p>
-        </div>
+        </RevealSection>
 
         <div className="grid md:grid-cols-2 gap-8 md:gap-12 relative">
           {/* Connecting line */}
@@ -22,14 +26,14 @@ export default function SolutionSection() {
           </div>
 
           {/* Preventive Layer */}
-          <div className="glass-card-strong p-8 md:p-10 relative animate-fade-in">
+          <RevealSection delay={1} className="glass-card-strong p-8 md:p-10 relative">
             <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-state-normal/20 border border-state-normal/30 flex items-center justify-center">
               <span className="text-xs font-bold text-state-normal">1</span>
             </div>
             <div className="w-14 h-14 rounded-2xl bg-state-normal/10 border border-state-normal/20 flex items-center justify-center mb-6">
               <Eye className="w-7 h-7 text-state-normal" />
             </div>
-            <h3 className="text-2xl font-bold mb-2">Preventive Layer</h3>
+            <h3 className="font-display text-2xl font-bold mb-2 tracking-tight">Preventive Layer</h3>
             <span className="text-sm text-state-normal/80 font-medium mb-4 block">Computer Vision Driver Monitoring</span>
             <p className="text-white/40 leading-relaxed mb-6">
               Continuously monitors the driver using a standard webcam and MediaPipe Face Mesh.
@@ -49,17 +53,17 @@ export default function SolutionSection() {
                 </li>
               ))}
             </ul>
-          </div>
+          </RevealSection>
 
           {/* Reactive Layer */}
-          <div className="glass-card-strong p-8 md:p-10 relative animate-fade-in animate-delay-200">
+          <RevealSection delay={2} className="glass-card-strong p-8 md:p-10 relative">
             <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-state-emergency/20 border border-state-emergency/30 flex items-center justify-center">
               <span className="text-xs font-bold text-state-emergency">2</span>
             </div>
             <div className="w-14 h-14 rounded-2xl bg-state-emergency/10 border border-state-emergency/20 flex items-center justify-center mb-6">
               <Bell className="w-7 h-7 text-state-emergency" />
             </div>
-            <h3 className="text-2xl font-bold mb-2">Reactive Layer</h3>
+            <h3 className="font-display text-2xl font-bold mb-2 tracking-tight">Reactive Layer</h3>
             <span className="text-sm text-state-emergency/80 font-medium mb-4 block">Embedded Crash Detection & SOS</span>
             <p className="text-white/40 leading-relaxed mb-6">
               When preventive measures are not enough, the ESP32-based embedded system detects crash-like events
@@ -80,7 +84,7 @@ export default function SolutionSection() {
                 </li>
               ))}
             </ul>
-          </div>
+          </RevealSection>
         </div>
       </div>
     </section>

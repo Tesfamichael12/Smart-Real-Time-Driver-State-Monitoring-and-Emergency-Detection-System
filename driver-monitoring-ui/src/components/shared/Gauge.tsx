@@ -92,7 +92,7 @@ export default function Gauge({
             dominantBaseline="central"
             fill="rgba(255,255,255,0.4)"
             fontSize={size * 0.08}
-            fontFamily="Inter, sans-serif"
+            fontFamily="Montserrat, sans-serif"
           >
             {sublabel}
           </text>
