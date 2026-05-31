@@ -1,0 +1,240 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-white/10;
+  }
+
+  body {
+    @apply bg-black text-white/90 font-sans;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-black;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
+  }
+
+  ::selection {
+    @apply bg-white/20 text-white;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl;
+  }
+
+  .glass-card-strong {
+    @apply bg-white/[0.06] backdrop-blur-xl border border-white/10 rounded-2xl;
+  }
+
+  .glass-card-hover {
+    @apply hover:bg-white/[0.08] transition-all duration-300;
+  }
+
+  .glow-border {
+    @apply border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)];
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-white via-white/80 to-white/60 bg-clip-text text-transparent;
+  }
+
+  .nav-link {
+    @apply text-white/60 hover:text-white transition-colors duration-200 text-sm font-medium;
+  }
+
+  .nav-link-active {
+    @apply text-white;
+  }
+
+  .btn-primary {
+    @apply bg-white text-black px-6 py-3 rounded-xl font-semibold text-sm
+           hover:bg-white/90 active:bg-white/80 transition-all duration-200
+           shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)];
+  }
+
+  .btn-secondary {
+    @apply border border-white/20 text-white/80 px-6 py-3 rounded-xl font-semibold text-sm
+           hover:bg-white/5 hover:border-white/30 transition-all duration-200;
+  }
+
+  .btn-ghost {
+    @apply text-white/60 hover:text-white px-4 py-2 rounded-lg text-sm font-medium
+           hover:bg-white/5 transition-all duration-200;
+  }
+
+  .section-title {
+    @apply text-4xl md:text-5xl font-bold tracking-tight;
+  }
+
+  .section-subtitle {
+    @apply text-lg text-white/50 max-w-2xl mx-auto;
+  }
+
+  .state-badge {
+    @apply px-3 py-1 rounded-lg text-xs font-semibold tracking-wider uppercase;
+  }
+
+  .state-normal {
+    @apply bg-state-normal/10 text-state-normal border border-state-normal/20;
+  }
+
+  .state-warning {
+    @apply bg-state-warning/10 text-state-warning border border-state-warning/20;
+  }
+
+  .state-alarm {
+    @apply bg-state-alarm/10 text-state-alarm border border-state-alarm/20;
+  }
+
+  .state-emergency {
+    @apply bg-state-emergency/10 text-state-emergency border border-state-emergency/20;
+  }
+
+  .state-muted {
+    @apply bg-state-muted/10 text-state-muted border border-state-muted/20;
+  }
+
+  .metric-card {
+    @apply glass-card p-4 md:p-5;
+  }
+
+  .metric-label {
+    @apply text-xs font-medium text-white/40 uppercase tracking-wider;
+  }
+
+  .metric-value {
+    @apply text-2xl md:text-3xl font-bold tracking-tight;
+  }
+
+  .pulse-dot {
+    @apply w-2 h-2 rounded-full animate-pulse-fast;
+  }
+}
+
+@layer utilities {
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-delay-400 { animation-delay: 400ms; }
+  .animate-delay-500 { animation-delay: 500ms; }
+  .animate-delay-700 { animation-delay: 700ms; }
+  .animate-delay-1000 { animation-delay: 1000ms; }
+}
+
+/* Smooth scrolling — applies to all scrollable containers */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Scroll margin for sections with fixed navbar */
+section[id] {
+  scroll-margin-top: 5rem;
+}
+
+/* Architecture SVG animations */
+.arch-node {
+  transition: all 0.3s ease;
+}
+.arch-node:hover {
+  filter: brightness(1.3);
+  transform: scale(1.05);
+}
+
+/* State machine transitions */
+.state-transition {
+  stroke-dasharray: 8, 4;
+  animation: dashFlow 1s linear infinite;
+}
+
+@keyframes dashFlow {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+/* Map grid styles */
+.map-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* SOS blink */
+.sos-blink {
+  animation: sosBlink 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes sosBlink {
+  0% { opacity: 1; text-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+  100% { opacity: 0.6; text-shadow: 0 0 40px rgba(239, 68, 68, 0.8); }
+}
+
+/* Scroll indicator */
+.scroll-indicator {
+  animation: scrollBounce 2s ease-in-out infinite;
+}
+
+@keyframes scrollBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}
+
+/* Alert slide-in animation */
+.alert-enter {
+  animation: alertSlideIn 0.3s ease-out;
+}
+
+@keyframes alertSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Gauge ring */
+.gauge-ring {
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+/* Emergency banner pulse */
+.emergency-pulse {
+  animation: emergencyPulse 1s ease-in-out infinite;
+}
+
+@keyframes emergencyPulse {
+  0%, 100% { border-color: rgba(239, 68, 68, 0.3); }
+  50% { border-color: rgba(239, 68, 68, 0.8); }
+}
+
+/* Vehicle marker pulse on map */
+.vehicle-marker {
+  animation: markerPulse 2s ease-in-out infinite;
+}
+
+@keyframes markerPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
+}

@@ -1,45 +1,33 @@
- # Node modules
- node_modules/
+node_modules/
+dist/
+build/
+out/
+coverage/
+.nyc_output/
+.vite/
+.parcel-cache/
+.turbo/
+.next/
+.cache/
+.eslintcache
 
- # Build outputs
- build/
- dist/
- out/
+.env
+.env.local
+.env.*.local
 
- # Local env files
- .env
- .env.local
- .env.*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
- # Logs
- npm-debug.log*
- yarn-debug.log*
- yarn-error.log*
- pnpm-debug.log*
+.vscode/
+.idea/
+*.sublime-workspace
+*.swp
+*.swo
 
- # Testing
- coverage/
- .nyc_output/
+.DS_Store
+Thumbs.db
+*.local
 
- # Editor/IDE
- .vscode/
- .idea/
- *.sublime-workspace
-
- # OS files
- .DS_Store
- Thumbs.db
-
- # Misc
- .parcel-cache/
- .cache/
- .next/
- .turbo/
- *.local
-
- # Static analysis
- .eslintcache
-
- # Lock files (if you prefer to ignore lockfiles, otherwise remove)
- # package-lock.json
- # yarn.lock
+# Keep package-lock.json / yarn.lock tracked unless you intentionally ignore them.
