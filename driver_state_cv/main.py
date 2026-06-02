@@ -855,14 +855,15 @@ class DriverStateMonitor:
                     self.pose_initialized = True
                 else:
                     alpha = 0.05 # Stronger Smoothing factor (lower = more smoothing)
-                    self.smooth_pitch = (alpha * pitch) + ((1.0 - alpha) * self.smooth_pitch)
+                    alpha_pitch = 0.02 # Even stronger smoothing for pitch which is sensitive
+                    self.smooth_pitch = (alpha_pitch * pitch) + ((1.0 - alpha_pitch) * self.smooth_pitch)
                     self.smooth_yaw = (alpha * yaw) + ((1.0 - alpha) * self.smooth_yaw)
                     self.smooth_roll = (alpha * roll) + ((1.0 - alpha) * self.smooth_roll)
 
                 pitch, yaw, roll = self.smooth_pitch, self.smooth_yaw, self.smooth_roll
 
-                # Center Dead-zone Filter (snap to 0 if within +/- 5 degrees independently)
-                if abs(pitch) < 5.0:
+                # Center Dead-zone Filter (snap to 0 if within +/- 15 degrees independently)
+                if abs(pitch) < 15.0: # Increased dead-zone specifically for pitch
                     pitch = 0.0
                 if abs(yaw) < 5.0:
                     yaw = 0.0
@@ -1129,10 +1130,10 @@ def draw_dashboard(frame, payload):
     cv2.line(frame, (widget_cx - widget_r, widget_cy), (widget_cx + widget_r, widget_cy), (50, 50, 50), 1)
     cv2.line(frame, (widget_cx, widget_cy - widget_r), (widget_cx, widget_cy + widget_r), (50, 50, 50), 1)
 
-    # Map pitch/yaw to target space (clamped max yaw=35, pitch=25)
+    # Map pitch/yaw to target space (clamped max yaw=35, pitch=40)
     # Yaw maps to X axis, Pitch maps to Y axis (positive yaw is looking left, positive pitch is looking down/up depending on frame coordinate direction)
     norm_x = min(1.0, max(-1.0, yaw / 35.0))
-    norm_y = min(1.0, max(-1.0, pitch / 25.0))
+    norm_y = min(1.0, max(-1.0, pitch / 40.0)) # Made visually less sensitive
     cross_x = widget_cx + int(norm_x * widget_r)
     cross_y = widget_cy + int(norm_y * widget_r)
 
